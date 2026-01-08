@@ -3,8 +3,10 @@ version: '3.8'
 services:
   prometheus:
     image: prom/prometheus:latest
+    configs: # swarm raft 저장소의 prometheus.yml을 가져와서 target에 생성해 config로 사용
+      - source: prometheus.yml
+        target: /etc/prometheus/prometheus.yml
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml # 호스트에 있는 설정 파일을 컨테이너 내부로 주입
       - prometheus_data:/prometheus # 컨테이너 내부의 데이터를 외부(volume)에 저장해 보존.
     networks:
       - default           # 그라파나와 통신용 (스택 내부)
@@ -19,6 +21,9 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/datasource.yml
     networks:
       - default           # 프로메테우스와 통신용
     deploy:
@@ -45,3 +50,9 @@ networks:
 volumes:
   prometheus_data:
   grafana_data:
+
+configs:
+  prometheus.yml:
+    file: ./prometheus/prometheus.yml
+  grafana_datasource:
+    file: ./grafana/provisioning/datasources/datasource.yml
