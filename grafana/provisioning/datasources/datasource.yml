@@ -1,5 +1,5 @@
 apiVersion: 1
-datasource: # 정의할 데이터 소스들의 리스트 섹선
+datasources: # 정의할 데이터 소스들의 리스트 섹선
   - name: Prometheus # Grafana 대시보드에서 사용자가 보게 될 데이터 소스 이름
     type: prometheus # 연결할 데이터 소스 종류
     url: http://prometheus:9090 # grafana 서버가 prometheus 서버에 접근할 수 있는 네트워크 주소
