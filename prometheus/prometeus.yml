@@ -1,0 +1,22 @@
+global: # 모든 수집 작업에 공통으로 적용되는 설정
+  scrape_interval: 15s # 15초마다 데이터 수집
+
+scrape_configs: # 데이터 수집 대상 설정
+  # 1. 스프링부트 앱 모니터링
+  - job_name: 'fitU-app' # 수집한 데이터에 붙일 그룹 이름
+    metrics_path: '/actuator/prometheus' # 메트릭 데이터가 노출되어있는 endpoint
+    dns_sd_configs: # dns를 통해 수집 대상을 동적으로 발견하겠다는 설정.(여러 개의 레플리카를 자동으로 찾아내 모니터링하기 위함)
+      - names:  # Docker Swarm 내부 DNS 서버에 질의할 서비스 이름
+          # 'tasks.<앱_스택_이름>_<앱_서비스_이름>'
+          # 서비스 명 앞에 tasks.를 붙이면 해당 서비스로 실행 중인 모든 컨테이너의 개별 IP 리스트 반환.
+          - 'tasks.fitu_app'
+        type: 'A' # DNS 레코드 타입. 도메인 이름을 IP 주소로 매핑하는 표준 방식.
+        port: 8080  # 발견된 IP 들의 몇 번 포트로 접속할지 지정
+
+  # 2. 컨테이너 리소스 모니터링 (cAdvisor 사용 시)
+  - job_name: 'cadvisor'
+    dns_sd_configs:
+      - names:
+          - 'tasks.monitoring_cadvisor'
+        type: 'A'
+        port: 8080
