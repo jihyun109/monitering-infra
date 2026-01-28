@@ -3,6 +3,13 @@ version: '3.8'
 services:
   prometheus:
     image: prom/prometheus:latest
+    command: # 데이터 보관 기간을 대폭 줄여 메모리 절약
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=3d'
+      - '--storage.tsdb.retention.size=512MB'
+    ports:
+      - "9090:9090"
     configs: # swarm raft 저장소의 prometheus.yml을 가져와서 target에 생성해 config로 사용
       - source: prometheus.yml
         target: /etc/prometheus/prometheus.yml
@@ -14,6 +21,13 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager] # 매니저 노드에 배치
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 350M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
 
   grafana:
     image: grafana/grafana:latest
@@ -29,24 +43,42 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 150M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0 # 스웜 노드들의 CPU/MEM 수집
+    privileged: true
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
+      - /:/rootfs:ro # 호스트 컴퓨터의 루트 디렉토리(/) 전체를 cAdvisor 내부의 /rootfs라는 폴더에 연결
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro # 리눅스 커널의 정보를 담고 있는 가상 파일 시스템. cgroup 정보가 있음
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - default
     deploy:
       mode: global # Swarm 클러스터 내의 모든 노드에 하나씩 실행하여 전체 노드 감시
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: 150M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    devices:
+      - /dev/kmsg:/dev/kmsg
 
 networks:
   monitoring-bridge:
     external: true
 
-# 컨테이너가 삭제되어도 데이터를 보존하기 위해 volume 정의
+# 도커에 해당 이름으로 volume을 만들어달라고 volume 정의
 volumes:
   prometheus_data:
   grafana_data:
