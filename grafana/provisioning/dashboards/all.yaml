@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'Zero-Downtime Deployment Dashboards'
+    orgId: 1
+    folder: ''                    # 그라파나 내에서 저장될 폴더 이름
+    type: file
+    disableDeletion: false
+    editable: true                # UI에서 수정 가능 여부
+    options:
+      path: /etc/grafana/provisioning/dashboards # 컨테이너 내부 경로
