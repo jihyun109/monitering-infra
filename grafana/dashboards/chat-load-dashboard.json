@@ -1,0 +1,466 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" }
+  ],
+  "annotations": { "list": [] },
+  "description": "FituU 채팅 부하테스트 모니터링 — DB 커넥션 풀 / JVM / Redis / k6 메트릭",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    // ─────────────────────────────────────────────────────────────
+    // Row 1: 부하 개요 (k6 메트릭)
+    // ─────────────────────────────────────────────────────────────
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "부하 개요 (k6)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "none",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 100 },
+            { "color": "red", "value": 250 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "title": "활성 VU (k6)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "k6_vus",
+        "legendFormat": "VUs"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 4, "w": 5, "x": 4, "y": 1 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "title": "초당 전송 메시지 (k6)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "rate(k6_chat_messages_sent_total[1m])",
+        "legendFormat": "msg/s"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 4, "w": 5, "x": 9, "y": 1 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "title": "초당 수신 메시지 (k6)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "rate(k6_chat_messages_received_total[1m])",
+        "legendFormat": "msg/s"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "none", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 5, "x": 14, "y": 1 },
+      "id": 4,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "title": "WS 연결 실패 (k6)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "k6_ws_connection_failed_total",
+        "legendFormat": "실패 수"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "ms", "color": { "mode": "palette-classic" } } },
+      "gridPos": { "h": 4, "w": 5, "x": 19, "y": 1 },
+      "id": 5,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "title": "메시지 레이턴시 p95 (k6)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "histogram_quantile(0.95, rate(k6_chat_message_latency_ms_bucket[1m]))",
+        "legendFormat": "p95"
+      }]
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Row 2: 메시지 레이턴시 상세 (시계열)
+    // ─────────────────────────────────────────────────────────────
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "메시지 레이턴시 (send → receive 왕복)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "color": { "mode": "palette-classic" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "p99" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "p95" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "id": 6,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "메시지 왕복 레이턴시 p50 / p95 / p99",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.50, rate(k6_chat_message_latency_ms_bucket[1m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.95, rate(k6_chat_message_latency_ms_bucket[1m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.99, rate(k6_chat_message_latency_ms_bucket[1m]))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Row 3: DB 병목 (HikariCP) — 핵심 지표
+    // ─────────────────────────────────────────────────────────────
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "DB 병목 — HikariCP 커넥션 풀 (메시지 1건 = DB 쿼리 3회)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "대기 중 (pending)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 3 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 7,
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "thresholds": { "mode": "line+area", "steps": [] }
+      },
+      "title": "HikariCP 커넥션 수 (active / idle / pending)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_active{application=\"fitU-app\"}",
+          "legendFormat": "사용 중 (active)"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_idle{application=\"fitU-app\"}",
+          "legendFormat": "유휴 (idle)"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_pending{application=\"fitU-app\"}",
+          "legendFormat": "대기 중 (pending) ← 이게 올라가면 병목"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_max{application=\"fitU-app\"}",
+          "legendFormat": "풀 최대값"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.5 },
+            { "color": "red", "value": 2 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 8,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "HikariCP 커넥션 획득 대기 시간 (p99) — 2초 초과 시 요청 타임아웃",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.99, rate(hikaricp_connections_acquire_seconds_bucket{application=\"fitU-app\"}[1m]))",
+          "legendFormat": "획득 대기 p99"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.95, rate(hikaricp_connections_acquire_seconds_bucket{application=\"fitU-app\"}[1m]))",
+          "legendFormat": "획득 대기 p95"
+        }
+      ]
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Row 4: Redis
+    // ─────────────────────────────────────────────────────────────
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 103,
+      "title": "Redis Pub/Sub (redis-exporter 필요)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "ops", "color": { "mode": "palette-classic" },
+        "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 24 },
+      "id": 9,
+      "title": "Redis PUBLISH 처리량 (ops/s)",
+      "type": "timeseries",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "rate(redis_commands_total{cmd=\"publish\"}[1m])",
+        "legendFormat": "PUBLISH/s"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" },
+        "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 24 },
+      "id": 10,
+      "title": "Redis PUBLISH 처리 시간 (평균)",
+      "type": "timeseries",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "rate(redis_commands_duration_seconds_total{cmd=\"publish\"}[1m]) / rate(redis_commands_total{cmd=\"publish\"}[1m])",
+        "legendFormat": "PUBLISH avg latency"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" },
+        "custom": { "lineWidth": 2, "fillOpacity": 10 },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 100000000 },
+          { "color": "red", "value": 120000000 }
+        ]}
+      }},
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 24 },
+      "id": 11,
+      "title": "Redis 메모리 사용량 (한도 128MB)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "redis_memory_used_bytes",
+          "legendFormat": "사용 중"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "redis_memory_max_bytes",
+          "legendFormat": "최대 한도"
+        }
+      ]
+    },
+
+    // ─────────────────────────────────────────────────────────────
+    // Row 5: JVM
+    // ─────────────────────────────────────────────────────────────
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "id": 104,
+      "title": "JVM — 힙 / GC / 스레드 / CPU (SerialGC, Xmx200m)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 160000000 },
+            { "color": "red", "value": 190000000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 12,
+      "title": "JVM 힙 사용량 (한도 200MB) — OOM 근접 시 GC 폭주",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_memory_used_bytes{application=\"fitU-app\", area=\"heap\"}",
+          "legendFormat": "힙 사용"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_memory_max_bytes{application=\"fitU-app\", area=\"heap\"}",
+          "legendFormat": "힙 최대 (Xmx)"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_memory_committed_bytes{application=\"fitU-app\", area=\"heap\"}",
+          "legendFormat": "힙 커밋"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.1 },
+            { "color": "red", "value": 0.5 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 13,
+      "title": "GC 일시정지 시간/분 (SerialGC = 단일 스레드 STW — 메시지 지연 직결)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"fitU-app\"}[1m])",
+          "legendFormat": "GC 일시정지 {{action}} {{cause}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" },
+        "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 40 },
+      "id": 14,
+      "title": "JVM 스레드 수 (clientInboundChannel 스레드 풀 포화 관찰)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_threads_live_threads{application=\"fitU-app\"}",
+          "legendFormat": "라이브 스레드"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_threads_daemon_threads{application=\"fitU-app\"}",
+          "legendFormat": "데몬 스레드"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jvm_threads_states_threads{application=\"fitU-app\", state=\"blocked\"}",
+          "legendFormat": "BLOCKED 스레드 ← 이게 올라가면 경합"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "min": 0, "max": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.5 },
+            { "color": "red", "value": 0.8 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 40 },
+      "id": 15,
+      "title": "프로세스 CPU 사용률 (컨테이너 한도 0.6코어)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "process_cpu_usage{application=\"fitU-app\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "tags": ["fitu", "chat", "load-test"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource",
+        "label": "Prometheus"
+      }
+    ]
+  },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "Asia/Seoul",
+  "title": "FituU 채팅 부하테스트",
+  "uid": "fitu-chat-load-test",
+  "version": 1
+}
