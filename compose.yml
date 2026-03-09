@@ -8,6 +8,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=3d'
       - '--storage.tsdb.retention.size=512MB'
+      - '--web.enable-remote-write-receiver'
     ports:
       - "9090:9090"
     configs: # swarm raft 저장소의 prometheus.yml을 가져와서 target에 생성해 config로 사용
