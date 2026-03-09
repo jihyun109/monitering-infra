@@ -321,7 +321,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
       "id": 104,
-      "title": "JVM — 힙 / GC / 스레드 / CPU (SerialGC, Xmx200m)",
+      "title": "JVM — 힙 / GC / 스레드 / CPU (G1GC, Xmx400m)",
       "type": "row"
     },
     {
@@ -331,15 +331,15 @@
           "custom": { "lineWidth": 2, "fillOpacity": 10 },
           "thresholds": { "mode": "absolute", "steps": [
             { "color": "green", "value": null },
-            { "color": "yellow", "value": 160000000 },
-            { "color": "red", "value": 190000000 }
+            { "color": "yellow", "value": 320000000 },
+            { "color": "red", "value": 380000000 }
           ]}
         }
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
       "id": 12,
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
-      "title": "JVM 힙 사용량 (한도 200MB) — OOM 근접 시 GC 폭주",
+      "title": "JVM 힙 사용량 (한도 400MB) — OOM 근접 시 GC 폭주",
       "type": "timeseries",
       "targets": [
         {
@@ -374,7 +374,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
       "id": 13,
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
-      "title": "GC 일시정지 시간/분 (SerialGC = 단일 스레드 STW — 메시지 지연 직결)",
+      "title": "GC 일시정지 시간/분 (G1GC — Young/Mixed GC 비율 관찰)",
       "type": "timeseries",
       "targets": [
         {
@@ -433,6 +433,158 @@
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "process_cpu_usage{application=\"fitU-app\"}",
           "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 47 },
+      "id": 105,
+      "title": "수정 효과 검증 — GC pause / 스레드풀 cap / 컨테이너 재시작 / WS 연결 시간",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.05 },
+            { "color": "red", "value": 0.1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
+      "id": 16,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
+      "title": "GC 일시정지 p95/p99 (G1GC — 목표 <100ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.95, rate(jvm_gc_pause_seconds_bucket{application=\"fitU-app\"}[1m]))",
+          "legendFormat": "p95 {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "histogram_quantile(0.99, rate(jvm_gc_pause_seconds_bucket{application=\"fitU-app\"}[1m]))",
+          "legendFormat": "p99 {{instance}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 6 },
+            { "color": "red", "value": 8 }
+          ]}
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "거부됨.*" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 3 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 48 },
+      "id": 17,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
+      "title": "clientInboundChannel 스레드풀 상태 (maxPoolSize=8 cap 확인)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_pool_size_threads{name=~\".*clientInbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "풀 크기 {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_active_threads{name=~\".*clientInbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "활성 스레드 {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_queued_tasks{name=~\".*clientInbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "큐 대기 (max=200) {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "rate(executor_rejected_tasks_total{name=~\".*clientInbound.*\",application=\"fitU-app\"}[1m])",
+          "legendFormat": "거부됨/s ← 0이어야 정상 {{instance}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 56 },
+      "id": 18,
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "title": "컨테이너 재시작 횟수 (0이어야 성공 — 이전 테스트: 9회)",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "changes(process_start_time_seconds{application=\"fitU-app\"}[30m])",
+        "legendFormat": "재시작 {{instance}}"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 2000 },
+            { "color": "red", "value": 10000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 56 },
+      "id": 19,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "title": "WS 연결 시간 p95 (k6) — 이전 60s → 목표 <2s",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "expr": "histogram_quantile(0.95, rate(k6_ws_connecting_bucket[1m])) * 1000",
+        "legendFormat": "p95"
+      }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" },
+        "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 56 },
+      "id": 20,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "STOMP CONNECTED / 인증실패 (k6)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "rate(k6_stomp_connected_total[1m])",
+          "legendFormat": "CONNECTED 성공/s"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "rate(k6_stomp_auth_failed_total[1m])",
+          "legendFormat": "인증 실패/s"
         }
       ]
     }
