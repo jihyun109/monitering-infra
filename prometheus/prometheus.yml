@@ -13,7 +13,15 @@ scrape_configs: # 데이터 수집 대상 설정
         type: 'A' # DNS 레코드 타입. 도메인 이름을 IP 주소로 매핑하는 표준 방식.
         port: 8080  # 발견된 IP 들의 몇 번 포트로 접속할지 지정
 
-  # 2. 컨테이너 리소스 모니터링 (cAdvisor 사용 시)
+  # 2. Redis 모니터링 (redis-exporter)
+  - job_name: 'redis-exporter'
+    dns_sd_configs:
+      - names:
+          - 'tasks.fitu_redis-exporter'
+        type: 'A'
+        port: 9121
+
+  # 3. 컨테이너 리소스 모니터링 (cAdvisor 사용 시)
   - job_name: 'cadvisor'
     dns_sd_configs:
       - names:
