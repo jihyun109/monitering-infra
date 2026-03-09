@@ -87,6 +87,7 @@ volumes:
 
 configs:
   prometheus.yml:
+    name: prometheus.yml-${PROMETHEUS_HASH:-default}
     file: ./prometheus/prometheus.yml
   grafana_datasource:
     file: ./grafana/provisioning/datasources/datasource.yml
