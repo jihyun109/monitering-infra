@@ -137,7 +137,7 @@
       },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
       "id": 6,
-      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "메시지 왕복 레이턴시 p50 / p95 / p99",
       "type": "timeseries",
       "targets": [
@@ -187,7 +187,8 @@
       "options": {
         "tooltip": { "mode": "multi" },
         "legend": { "displayMode": "list", "placement": "bottom" },
-        "thresholds": { "mode": "line+area", "steps": [] }
+        "thresholds": { "mode": "line+area", "steps": [] },
+        "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false }
       },
       "title": "HikariCP 커넥션 수 (active / idle / pending)",
       "type": "timeseries",
@@ -228,7 +229,7 @@
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
       "id": 8,
-      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "HikariCP 커넥션 획득 대기 시간 (p99) — 2초 초과 시 요청 타임아웃",
       "type": "timeseries",
       "targets": [
@@ -258,6 +259,7 @@
         "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
       "gridPos": { "h": 7, "w": 8, "x": 0, "y": 24 },
       "id": 9,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "Redis PUBLISH 처리량 (ops/s)",
       "type": "timeseries",
       "targets": [{
@@ -272,6 +274,7 @@
         "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 24 },
       "id": 10,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "Redis PUBLISH 처리 시간 (평균)",
       "type": "timeseries",
       "targets": [{
@@ -292,6 +295,7 @@
       }},
       "gridPos": { "h": 7, "w": 8, "x": 16, "y": 24 },
       "id": 11,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "Redis 메모리 사용량 (한도 128MB)",
       "type": "timeseries",
       "targets": [
@@ -329,6 +333,7 @@
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
       "id": 12,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "JVM 힙 사용량 (한도 200MB) — OOM 근접 시 GC 폭주",
       "type": "timeseries",
       "targets": [
@@ -363,6 +368,7 @@
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
       "id": 13,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "GC 일시정지 시간/분 (SerialGC = 단일 스레드 STW — 메시지 지연 직결)",
       "type": "timeseries",
       "targets": [
@@ -379,6 +385,7 @@
         "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 40 },
       "id": 14,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "JVM 스레드 수 (clientInboundChannel 스레드 풀 포화 관찰)",
       "type": "timeseries",
       "targets": [
@@ -413,6 +420,7 @@
       },
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 40 },
       "id": 15,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "프로세스 CPU 사용률 (컨테이너 한도 0.6코어)",
       "type": "timeseries",
       "targets": [
