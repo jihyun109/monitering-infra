@@ -242,6 +242,11 @@
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
           "expr": "histogram_quantile(0.95, rate(hikaricp_connections_acquire_seconds_bucket{application=\"fitU-app\"}[1m]))",
           "legendFormat": "획득 대기 p95"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_acquire_seconds_max{application=\"fitU-app\"}",
+          "legendFormat": "획득 대기 max {{instance}}"
         }
       ]
     },
