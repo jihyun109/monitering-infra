@@ -188,7 +188,7 @@
         "tooltip": { "mode": "multi" },
         "legend": { "displayMode": "list", "placement": "bottom" },
         "thresholds": { "mode": "line+area", "steps": [] },
-        "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false }
+        "footer": { "show": true, "reducer": ["lastNotNull"], "fields": "", "enablePagination": false }
       },
       "title": "HikariCP 커넥션 수 (active / idle / pending)",
       "type": "timeseries",
@@ -339,18 +339,18 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "jvm_memory_used_bytes{application=\"fitU-app\", area=\"heap\"}",
-          "legendFormat": "힙 사용"
+          "expr": "sum by (instance) (jvm_memory_used_bytes{application=\"fitU-app\", area=\"heap\"})",
+          "legendFormat": "힙 사용 {{instance}}"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "jvm_memory_max_bytes{application=\"fitU-app\", area=\"heap\"}",
-          "legendFormat": "힙 최대 (Xmx)"
+          "expr": "sum by (instance) (jvm_memory_max_bytes{application=\"fitU-app\", area=\"heap\"})",
+          "legendFormat": "힙 최대 (Xmx) {{instance}}"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "jvm_memory_committed_bytes{application=\"fitU-app\", area=\"heap\"}",
-          "legendFormat": "힙 커밋"
+          "expr": "sum by (instance) (jvm_memory_committed_bytes{application=\"fitU-app\", area=\"heap\"})",
+          "legendFormat": "힙 커밋 {{instance}}"
         }
       ]
     },
@@ -385,7 +385,7 @@
         "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 40 },
       "id": 14,
-      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["lastNotNull"], "fields": "", "enablePagination": false } },
       "title": "JVM 스레드 수 (clientInboundChannel 스레드 풀 포화 관찰)",
       "type": "timeseries",
       "targets": [
