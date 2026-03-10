@@ -459,18 +459,18 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
       "id": 16,
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" }, "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false } },
-      "title": "GC 일시정지 p95/p99 (G1GC — 목표 <100ms)",
+      "title": "GC 일시정지 avg / max (G1GC — 목표 <100ms)",
       "type": "timeseries",
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "histogram_quantile(0.95, rate(jvm_gc_pause_seconds_bucket{application=\"fitU-app\"}[1m]))",
-          "legendFormat": "p95 {{instance}}"
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"fitU-app\"}[1m]) / rate(jvm_gc_pause_seconds_count{application=\"fitU-app\"}[1m])",
+          "legendFormat": "avg {{action}} {{cause}} {{instance}}"
         },
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "histogram_quantile(0.99, rate(jvm_gc_pause_seconds_bucket{application=\"fitU-app\"}[1m]))",
-          "legendFormat": "p99 {{instance}}"
+          "expr": "jvm_gc_pause_seconds_max{application=\"fitU-app\"}",
+          "legendFormat": "max {{action}} {{cause}} {{instance}}"
         }
       ]
     },
@@ -562,7 +562,7 @@
       "type": "stat",
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "expr": "histogram_quantile(0.95, rate(k6_ws_connecting_bucket[1m])) * 1000",
+        "expr": "k6_ws_connecting_p95 * 1000",
         "legendFormat": "p95"
       }]
     },
