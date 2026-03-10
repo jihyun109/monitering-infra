@@ -13,7 +13,29 @@ scrape_configs: # 데이터 수집 대상 설정
         type: 'A' # DNS 레코드 타입. 도메인 이름을 IP 주소로 매핑하는 표준 방식.
         port: 8080  # 발견된 IP 들의 몇 번 포트로 접속할지 지정
 
-  # 2. Redis 모니터링 (redis-exporter)
+  # 2. Blackbox Exporter — actuator/health probe (DB/Redis 장애 감지)
+  - job_name: 'blackbox-actuator-health'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    dns_sd_configs:
+      - names:
+          - 'tasks.fitu_app'
+        type: 'A'
+        port: 8080
+    relabel_configs:
+      # probe 대상 URL 조합: __address__ = <ip>:8080 → http://<ip>:8080/actuator/health
+      - source_labels: [__address__]
+        target_label: __param_target
+        replacement: 'http://${1}/actuator/health'
+      # blackbox-exporter로 요청을 전달
+      - target_label: __address__
+        replacement: 'blackbox-exporter:9115'
+      # 원래 인스턴스 주소를 instance 라벨로 보존
+      - source_labels: [__param_target]
+        target_label: instance
+
+  # 3. Redis 모니터링 (redis-exporter)
   - job_name: 'redis-exporter'
     dns_sd_configs:
       - names:
