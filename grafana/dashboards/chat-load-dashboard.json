@@ -587,6 +587,75 @@
           "legendFormat": "인증 실패/s"
         }
       ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 60 },
+      "id": 106,
+      "title": "팬아웃 병목 — clientOutboundChannel 스레드풀 (broadcast() 팬아웃 루프 관찰)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 12 },
+            { "color": "red", "value": 16 }
+          ]}
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "큐 대기.*" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 3 }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "거부됨.*" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "custom.lineWidth", "value": 3 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 61 },
+      "id": 21,
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "footer": { "show": true, "reducer": ["min", "max", "mean", "lastNotNull"], "fields": "", "enablePagination": false }
+      },
+      "title": "clientOutboundChannel 스레드풀 상태 (maxPoolSize=16, queue=1000 — 팬아웃 병목 관찰)",
+      "description": "broadcast() 에서 방 인원 수만큼 convertAndSend 호출 → 태스크가 이 큐에 쌓임. 큐 대기가 올라가면 팬아웃 루프가 병목임을 의미.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_pool_size_threads{name=~\".*clientOutbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "풀 크기 {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_active_threads{name=~\".*clientOutbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "활성 스레드 {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "executor_queued_tasks{name=~\".*clientOutbound.*\",application=\"fitU-app\"}",
+          "legendFormat": "큐 대기 (max=1000) {{instance}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "rate(executor_rejected_tasks_total{name=~\".*clientOutbound.*\",application=\"fitU-app\"}[1m])",
+          "legendFormat": "거부됨/s ← 0이어야 정상 {{instance}}"
+        }
+      ]
     }
   ],
   "refresh": "5s",
@@ -612,5 +681,5 @@
   "timezone": "Asia/Seoul",
   "title": "FituU 채팅 부하테스트",
   "uid": "fitu-chat-load-test",
-  "version": 1
+  "version": 2
 }
