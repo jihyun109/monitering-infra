@@ -399,7 +399,7 @@
           "enablePagination": false
         }
       },
-      "title": "메시지 왕복 레이턴시 p50 / p95 / p99",
+      "title": "메시지 왕복 레이턴시 p99 (k6) — p50/p95는 K6_PROMETHEUS_RW_TREND_STATS 설정 후 활성화",
       "type": "timeseries",
       "targets": [
         {
@@ -407,16 +407,16 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "k6_chat_message_latency_ms_p50",
-          "legendFormat": "p50"
+          "expr": "",
+          "legendFormat": "p50 (미설정)"
         },
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "k6_chat_message_latency_ms_p95",
-          "legendFormat": "p95"
+          "expr": "",
+          "legendFormat": "p95 (미설정)"
         },
         {
           "datasource": {
@@ -1695,7 +1695,7 @@
     },
     {
       "id": 107,
-      "title": "WS 연결 시간 avg (k6) — 팬아웃 최적화 전후 비교",
+      "title": "WS 연결 시간 p99 (k6) — 팬아웃 최적화 전후 비교",
       "type": "timeseries",
       "gridPos": {
         "h": 4,
@@ -1733,12 +1733,12 @@
       },
       "targets": [
         {
-          "expr": "k6_ws_connecting_avg * 1000",
-          "legendFormat": "ws_connecting avg (ms)",
+          "expr": "k6_ws_connecting_p99 * 1000",
+          "legendFormat": "ws_connecting p99 (ms)",
           "refId": "A"
         },
         {
-          "expr": "k6_ws_connecting_p95 * 1000",
+          "expr": "",
           "legendFormat": "ws_connecting p95 (ms)",
           "refId": "B"
         }
@@ -1790,8 +1790,8 @@
       },
       "targets": [
         {
-          "expr": "rate(k6_checks_total{expected_response=\"true\"}[1m]) / rate(k6_checks_total[1m])",
-          "legendFormat": "checks 성공률",
+          "expr": "k6_checks_rate",
+          "legendFormat": "checks 성공률 (0~1)",
           "refId": "A"
         }
       ],
@@ -2087,8 +2087,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "tomcat_threads_current_threads{application=\"fitU-app\"}",
-          "legendFormat": "전체 (current) {{instance}}",
+          "expr": "jvm_threads_live_threads{application=\"fitU-app\"}",
+          "legendFormat": "JVM 전체 스레드 {{instance}}",
           "refId": "A"
         },
         {
@@ -2096,21 +2096,12 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "tomcat_threads_busy_threads{application=\"fitU-app\"}",
-          "legendFormat": "busy {{instance}}",
+          "expr": "jvm_threads_states_threads{application=\"fitU-app\", state=\"runnable\"}",
+          "legendFormat": "RUNNABLE {{instance}}",
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "tomcat_threads_config_max_threads{application=\"fitU-app\"}",
-          "legendFormat": "max (설정값) {{instance}}",
-          "refId": "C"
         }
       ],
-      "title": "Tomcat 스레드 수 (current / busy) — 300 VU 시 32→208 폭발 관찰",
+      "title": "Tomcat 스레드 수 — mbeanregistry 활성화 필요 (현재: JVM 전체 스레드로 대체)",
       "type": "timeseries"
     },
     {
@@ -2240,7 +2231,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "executor_pool_size_threads{name=~\".*broadcast.*\",application=\"fitU-app\"}",
+          "expr": "executor_pool_size_threads{name=~\"clientOutboundChannelExecutor\",application=\"fitU-app\"}",
           "legendFormat": "풀 크기 {{instance}}",
           "refId": "A"
         },
@@ -2249,7 +2240,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "executor_active_threads{name=~\".*broadcast.*\",application=\"fitU-app\"}",
+          "expr": "executor_active_threads{name=~\"clientOutboundChannelExecutor\",application=\"fitU-app\"}",
           "legendFormat": "활성 스레드 {{instance}}",
           "refId": "B"
         },
@@ -2258,7 +2249,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "executor_queued_tasks{name=~\".*broadcast.*\",application=\"fitU-app\"}",
+          "expr": "executor_queued_tasks{name=~\"clientOutboundChannelExecutor\",application=\"fitU-app\"}",
           "legendFormat": "큐 대기 {{instance}}",
           "refId": "C"
         },
@@ -2267,12 +2258,12 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "rate(executor_rejected_tasks_total{name=~\".*broadcast.*\",application=\"fitU-app\"}[1m])",
+          "expr": "rate(executor_rejected_tasks_total{name=~\"clientOutboundChannelExecutor\",application=\"fitU-app\"}[1m])",
           "legendFormat": "거부됨/s ← 0이어야 정상 {{instance}}",
           "refId": "D"
         }
       ],
-      "title": "broadcastExecutor 스레드풀 — 비동기 팬아웃 (8차 최적화 핵심)",
+      "title": "broadcastExecutor 스레드풀 — Micrometer 미등록 (clientOutboundChannelExecutor로 대체)",
       "type": "timeseries"
     },
     {
