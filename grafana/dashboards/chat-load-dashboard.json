@@ -2087,8 +2087,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "jvm_threads_live_threads{application=\"fitU-app\"}",
-          "legendFormat": "JVM 전체 스레드 {{instance}}",
+          "expr": "tomcat_threads_current_threads{application=\"fitU-app\"}",
+          "legendFormat": "전체 (current) {{instance}}",
           "refId": "A"
         },
         {
@@ -2096,12 +2096,21 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "jvm_threads_states_threads{application=\"fitU-app\", state=\"runnable\"}",
-          "legendFormat": "RUNNABLE {{instance}}",
+          "expr": "tomcat_threads_busy_threads{application=\"fitU-app\"}",
+          "legendFormat": "busy {{instance}}",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "tomcat_threads_config_max_threads{application=\"fitU-app\"}",
+          "legendFormat": "max (설정값) {{instance}}",
+          "refId": "C"
         }
       ],
-      "title": "Tomcat 스레드 수 — mbeanregistry 활성화 필요 (현재: JVM 전체 스레드로 대체)",
+      "title": "Tomcat 스레드 수 (current / busy / max) — 부하 시 busy 상승 관찰",
       "type": "timeseries"
     },
     {
